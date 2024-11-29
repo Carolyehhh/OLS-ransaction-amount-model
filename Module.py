@@ -40,8 +40,17 @@ def extract_data(data_SQLquery_list):
         return None
     return all_data
 
-# test = extract_data(MacroData)
-# print(test)
+def get_last_month_of_quarter(year_month):
+    year = int(year_month[:4])
+    month = int(year_month[-2:])
+    if month in [1, 2, 3]:
+        return f"{year}03"
+    elif month in [4, 5, 6]:
+        return f"{year}06"
+    elif month in [7, 8, 9]:
+        return f"{year}09"
+    elif month in [10, 11, 12]:
+        return f"{year}12"
 
 
 
