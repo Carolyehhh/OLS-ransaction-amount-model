@@ -1,9 +1,11 @@
 # Goal:大盤成交金額預估，資料從201701-202410(因為202411的部分資料，如:CPI、M1B尚未公布)、相比於建文的檔案排除WPI相關數值，因為「主計總處自資料時間112年1月起停編躉售物價指數」
+# 202301前跑一版有WPI的，202301後跑拿掉WPI的
 import statsmodels.api as sm
 import numpy as np
 import pandas as pd
 from sqlalchemy import create_engine
 import matplotlib.pyplot as plt
+import seaborn as sns
 from Module import Connect_to_MSSQL, extract_data, get_last_month_of_quarter
 from data_SQLquery_list import MacroData
 
@@ -53,11 +55,6 @@ pivot_MacroVar.reset_index(inplace=True)
 pivot_MacroVar['年季'] = pivot_MacroVar['年月'].apply(get_last_month_of_quarter)
 Combined_df = pd.merge(Combined_df, pivot_MacroVar[['年季','經濟成長率(GDP)–單季', '國內生產毛額(GDP)–美元', '平均每人國內生產毛額(GDP)–美元']].dropna(), how='left', on=['年季', '年季'])
 
-# YY:農曆年(過年月份) V
-# L1: 上個月的市場成交金額 V
-# L2: 上上個月的市場成交金額 V
-# 市場上的交易日 V
-
 # 確認回歸模型的前提條件
 # 母體資料的線性關係
 # 相關性
@@ -68,7 +65,22 @@ X = Combined_df[['是否放假', '經濟成長率(GDP)–單季', '國內生產�
        '上上個月成交金額(千)_月']]
 Y = Combined_df['成交金額(千)_月']
 correlation_matrix = X.corrwith(Y)
-print(correlation_matrix)
+# print(correlation_matrix)
+
+# OLS Model
+transaction_amount_pred = sm.datasets.get_rdataset()
+Y = transaction_amount_pred.Com
+
+# 殘差項
+# A.常態分佈
+# sns.histplot(residuals, kde=True) # kde=True 繪製核密度曲線
+# plt.show()
+# B.變異數同質性
+# C.各自獨立
+
+
+
+
 
 # =================
 # #duncan_prestige = sm.datasets.get_rdataset("Duncan", "carData")
@@ -120,3 +132,10 @@ print(correlation_matrix)
 # # plt.xlabel('X variables')
 # # plt.ylabel('Y')
 # # plt.show()
+
+#====================================
+# 其他資料
+# YY:農曆年(過年月份) V
+# L1: 上個月的市場成交金額 V
+# L2: 上上個月的市場成交金額 V
+# 市場上的交易日 V
