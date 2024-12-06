@@ -1,5 +1,5 @@
 # Goal:大盤成交金額預估，資料從201701-202410(因為202411的部分資料，如:CPI、M1B尚未公布)、相比於建文的檔案排除WPI相關數值，因為「主計總處自資料時間112年1月起停編躉售物價指數」
-# 202301前跑一版有WPI的，202301後跑拿掉WPI的
+# WPI 改使用 PPI
 import statsmodels.api as sm
 import numpy as np
 import pandas as pd
@@ -68,8 +68,9 @@ correlation_matrix = X.corrwith(Y)
 # print(correlation_matrix)
 
 # OLS Model
-transaction_amount_pred = sm.datasets.get_rdataset()
-Y = transaction_amount_pred.Com
+transaction_amount_model0 = sm.OLS(Y, X)
+result0 = transaction_amount_model0.fit()
+print(result0.summary())
 
 # 殘差項
 # A.常態分佈

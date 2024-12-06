@@ -1,5 +1,6 @@
 MacroData = ["""
 --Macro Variables
+--找不到台灣的PPI??
 select *
 from CMServer.Northwind.dbo.sysallun
 where 名稱 in ('消費者物價指數(CPI)', '消費者物價指數(CPI)年增率', '貨幣總額年增率(M1B)期底', '貨幣總額(M1B)日平均', '經濟成長率(GDP)–單季',
