@@ -1,5 +1,6 @@
 # Goal:大盤成交金額預估，資料從201701-202410(因為202411的部分資料，如:CPI、M1B尚未公布)、相比於建文的檔案排除WPI相關數值，因為「主計總處自資料時間112年1月起停編躉售物價指數」
-# WPI 改使用 PPI
+# WPI 改使用 PPI >> 使用「中華民國統計資訊網」的資料
+# 2021年前使用 WPI，2021年後使用 PPI
 import statsmodels.api as sm
 import numpy as np
 import pandas as pd
@@ -8,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 from scipy.stats import boxcox
+import csv
 from Module import Connect_to_MSSQL, extract_data, get_last_month_of_quarter
 from data_SQLquery_list import MacroData
 
@@ -15,6 +17,20 @@ from data_SQLquery_list import MacroData
 data = extract_data(MacroData)
 data = [pd.DataFrame(element) for element in data]
 # print(data[3]) #農曆年月份 #print(data[4]) #交易天數
+
+# 讀取 PPI 的 CSV 檔案並轉換為 DataFrame
+PPI_df = pd.read_csv('PPI_TW.csv', usecols=[0, 1], header=None, nrows=47, skiprows=1)
+PPI_df.columns = ['original_date', 'overall_ppi']
+
+# 日期轉換函式
+def convert_date (original_date):
+    year = int(original_date[:3]) + 1911
+    month_part = original_date.split('~')[1] # Extract the part after '~'
+    month = ''.join(filter(str.isdigit, month_part))
+    return f"{year}{int(month):02d}" # Format as YYYYMM
+
+PPI_df['年月'] = PPI_df['original_date'].apply(convert_date)
+PPI_df = PPI_df[['年月', 'overall_ppi']]
 
 # 先對月-總經資料做轉置
 pivot_MacroVar = data[0].pivot(index='年月', columns='名稱', values='數值')
@@ -26,13 +42,13 @@ Combined_df = pd.merge(data[2], pivot_MacroVar,how='left', on=['年月','年月'
 Combined_df = (
     pd.merge(
         Combined_df.query("年月 >= '201601' and 年月 <= '202410'")[
-            ['年月', '成交金額(千)_月', '消費者物價指數(CPI)', '消費者物價指數(CPI)年增率', '貨幣總額(M1B)日平均', '貨幣總額年增率(M1B)期底', '貨幣總額(M2)日平均', '貨幣總額年增率(M2)期底', '中央銀行重貼現率', '失業率']
+            ['年月', '成交金額(千)_月', '消費者物價指數(CPI)', '消費者物價指數(CPI)年增率', '貨幣總額(M1B)日平均', '貨幣總額年增率(M1B)期底', '貨幣總額(M2)日平均', '貨幣總額年增率(M2)期底', '中央銀行重貼現率', '失業率', '躉售物價指數', '躉售物價指數年增率']
         ],
         data[3],
         how='left',
         on = ['年月','年月']
     )[
-        ['年月', '成交金額(千)_月', '是否放假', '消費者物價指數(CPI)', '消費者物價指數(CPI)年增率', '貨幣總額(M1B)日平均', '貨幣總額年增率(M1B)期底', '貨幣總額(M2)日平均', '貨幣總額年增率(M2)期底', '中央銀行重貼現率', '失業率']
+        ['年月', '成交金額(千)_月', '是否放假', '消費者物價指數(CPI)', '消費者物價指數(CPI)年增率', '貨幣總額(M1B)日平均', '貨幣總額年增率(M1B)期底', '貨幣總額(M2)日平均', '貨幣總額年增率(M2)期底', '中央銀行重貼現率', '失業率', '躉售物價指數', '躉售物價指數年增率']
     ]
 
 )
@@ -56,7 +72,8 @@ pivot_MacroVar.reset_index(inplace=True)
 
 pivot_MacroVar['年季'] = pivot_MacroVar['年月'].apply(get_last_month_of_quarter)
 Combined_df = pd.merge(Combined_df, pivot_MacroVar[['年季','經濟成長率(GDP)–單季', '國內生產毛額(GDP)–美元', '平均每人國內生產毛額(GDP)–美元']].dropna(), how='left', on=['年季', '年季'])
-# print(len(Combined_df)) #94
+# print(Combined_df)
+# print(len(Combined_df)) #94, 20
 
 # 母體資料的線性關係
 X = Combined_df[['是否放假', '經濟成長率(GDP)–單季', '國內生產毛額(GDP)–美元',
@@ -70,11 +87,18 @@ X = sm.add_constant(X)
 
 Y = Combined_df['成交金額(千)_月']
 
-# OLS Model
-transaction_amount_model0 = sm.OLS(Y, X)
-result0 = transaction_amount_model0.fit()
-print(result0.summary())
+# # OLS Model
+# transaction_amount_model0 = sm.OLS(Y, X)
+# result0 = transaction_amount_model0.fit()
+# print(result0.summary())
 
+"""
+To Do: 把WPI null的值抓出來，以PPI取代
+"""
+print(Combined_df.isnull)
+
+
+# =====================================
 # # 解決殘差非常態分佈的問題: 
 # # 偏度計算
 # skewness_values = Combined_df.select_dtypes(include='number').apply(lambda x: stats.skew(x, bias=False))
