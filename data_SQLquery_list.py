@@ -33,7 +33,7 @@ select left(日期, 6) as 年月, 假日名稱, 是否放假
 from CMServer.Northwind.dbo.sysfinholiday
 where 名稱 like '%金融業休假日%' and 假日名稱='春節'
 ) a
-""",
+""" ,
 """
  --交易天數(月)
 select left(日期,6) as 年月, count(current_交易天數)  as 交易天數_月
@@ -54,4 +54,5 @@ order by left(日期,6)
 """
 ]
 
-# print(type(MacroData)) #str
+# print((MacroData[-1])) #str
+
