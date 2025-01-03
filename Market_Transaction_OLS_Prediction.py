@@ -152,10 +152,7 @@ Combined_lag = Combined_df.copy().dropna()
 X_lag = Combined_lag[['Lag_' + col for col in lagged_columns]]
 Y_lag = Combined_lag['成交金額(千)_月']
 
-""""
-TO DO:
-沒有使用11月的數值預測12月的金額
-"""
+
 train_data = Combined_lag[Combined_lag['年月'] < '202412']
 test_data = Combined_lag[Combined_lag['年月'] == '202412']
 feature_columns = [

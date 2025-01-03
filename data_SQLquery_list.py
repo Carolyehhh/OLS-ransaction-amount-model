@@ -54,5 +54,3 @@ order by left(日期,6)
 """
 ]
 
-# print((MacroData[-1])) #str
-
